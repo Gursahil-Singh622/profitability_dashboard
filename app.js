@@ -28,6 +28,7 @@ const demoCredentials = {
   email: "demo@example.com",
   password: "DemoPass123!"
 };
+const demoPasswordAliases = new Set([demoCredentials.password, "DemoPass123", "demo12345"]);
 
 let currentUser = null;
 let currentEntryId = null;
@@ -175,13 +176,18 @@ function saveDemoEntries(entries) {
   localStorage.setItem("driver-ledger-demo-weeks", JSON.stringify(entries));
 }
 
+function createId() {
+  if (typeof crypto !== "undefined" && crypto.randomUUID) return crypto.randomUUID();
+  return `demo-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
 function seedDemoEntries() {
   if (demoEntries().length) return;
 
   const weekStart = startOfWeek();
   saveDemoEntries([
     {
-      id: crypto.randomUUID(),
+      id: createId(),
       user_id: "demo-user",
       week_start: weekStart,
       gross_earnings: 1180,
@@ -299,7 +305,7 @@ async function saveWeek() {
     const entries = demoEntries();
     const nextEntry = {
       ...payload,
-      id: currentEntryId || crypto.randomUUID()
+      id: currentEntryId || createId()
     };
     const nextEntries = currentEntryId
       ? entries.map((entry) => (entry.id === currentEntryId ? nextEntry : entry))
@@ -338,7 +344,7 @@ async function handleAuth(event) {
   const email = $("#auth-email").value.trim();
   const password = $("#auth-password").value;
 
-  if (authMode === "signin" && email.toLowerCase() === demoCredentials.email && password === demoCredentials.password) {
+  if (authMode === "signin" && email.toLowerCase() === demoCredentials.email && demoPasswordAliases.has(password)) {
     enterDemoMode();
     return;
   }
