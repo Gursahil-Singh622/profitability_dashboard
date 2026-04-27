@@ -14,11 +14,14 @@ test("demo credentials open the dashboard", async ({ page }) => {
 
   await page.getByRole("button", { name: "Revenue" }).click();
   await expect(page.getByRole("heading", { name: "Revenue" })).toBeVisible();
+  await expect(page.locator("#revenue-daily-grid").getByText("Mon")).toBeVisible();
 
   await page.getByRole("button", { name: "Expenses" }).click();
   await expect(page.getByRole("heading", { name: "Fixed Costs" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Variable Costs" })).toBeVisible();
+  await expect(page.locator("#variable-daily-grid").getByText("Sun")).toBeVisible();
 
   await page.getByRole("button", { name: "Workload" }).click();
   await expect(page.getByRole("heading", { name: "Workload" })).toBeVisible();
+  await expect(page.locator("#workload-daily-grid .daily-header").getByText("Online hrs")).toBeVisible();
 });

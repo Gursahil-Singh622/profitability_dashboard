@@ -420,6 +420,61 @@ textarea:focus {
   gap: 14px;
 }
 
+.daily-grid {
+  display: grid;
+  gap: 8px;
+  overflow-x: auto;
+}
+
+.daily-row {
+  display: grid;
+  grid-template-columns: 78px repeat(var(--daily-columns, 3), minmax(118px, 1fr));
+  gap: 8px;
+  min-width: max-content;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-2);
+}
+
+#fixed-daily-grid {
+  --daily-columns: 1;
+}
+
+#variable-daily-grid {
+  --daily-columns: 6;
+}
+
+#workload-daily-grid {
+  --daily-columns: 4;
+}
+
+.daily-header {
+  background: var(--surface-3);
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.daily-row b {
+  align-self: center;
+  color: var(--ink);
+}
+
+.daily-row label {
+  gap: 4px;
+}
+
+.daily-row label span {
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
+.daily-row input {
+  min-height: 38px;
+}
+
 .notes-label {
   grid-column: 2;
   margin-top: 14px;

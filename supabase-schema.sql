@@ -19,6 +19,7 @@ create table if not exists public.driver_weekly_finances (
   active_hours numeric(8, 2) not null default 0,
   miles numeric(10, 1) not null default 0,
   trips integer not null default 0,
+  daily_entries jsonb not null default '{}'::jsonb,
   notes text not null default '',
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),

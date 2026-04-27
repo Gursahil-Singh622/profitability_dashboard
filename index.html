@@ -161,11 +161,7 @@
                 <h2>Revenue</h2>
                 <p>Income from Uber and riders for the selected week.</p>
               </div>
-              <div class="input-grid">
-                <label>Uber payouts <input data-money data-field="gross_earnings" type="number" min="0" step="0.01" /></label>
-                <label>Tips <input data-money data-field="tips" type="number" min="0" step="0.01" /></label>
-                <label>Promos / bonuses <input data-money data-field="app_bonus" type="number" min="0" step="0.01" /></label>
-              </div>
+              <div id="revenue-daily-grid" class="daily-grid"></div>
             </section>
           </section>
 
@@ -175,12 +171,7 @@
                 <h2>Fixed Costs</h2>
                 <p>Recurring costs allocated to this week.</p>
               </div>
-              <div class="input-grid">
-                <label>Insurance <input data-money data-field="fixed_insurance" type="number" min="0" step="0.01" /></label>
-                <label>Phone plan <input data-money data-field="fixed_phone" type="number" min="0" step="0.01" /></label>
-                <label>Vehicle payment <input data-money data-field="fixed_vehicle_payment" type="number" min="0" step="0.01" /></label>
-                <label>Other fixed <input data-money data-field="fixed_other" type="number" min="0" step="0.01" /></label>
-              </div>
+              <div id="fixed-daily-grid" class="daily-grid compact-daily-grid"></div>
             </section>
 
             <section class="form-section">
@@ -188,14 +179,7 @@
                 <h2>Variable Costs</h2>
                 <p>Costs that move with driving volume.</p>
               </div>
-              <div class="input-grid">
-                <label>Fuel / charging <input data-money data-field="fuel" type="number" min="0" step="0.01" /></label>
-                <label>Maintenance <input data-money data-field="maintenance" type="number" min="0" step="0.01" /></label>
-                <label>Tolls / parking <input data-money data-field="tolls_parking" type="number" min="0" step="0.01" /></label>
-                <label>Car wash <input data-money data-field="car_wash" type="number" min="0" step="0.01" /></label>
-                <label>Meals / supplies <input data-money data-field="food" type="number" min="0" step="0.01" /></label>
-                <label>Other variable <input data-money data-field="variable_other" type="number" min="0" step="0.01" /></label>
-              </div>
+              <div id="variable-daily-grid" class="daily-grid"></div>
             </section>
           </section>
 
@@ -205,12 +189,7 @@
                 <h2>Workload</h2>
                 <p>Time, trips, distance, and notes for the selected week.</p>
               </div>
-              <div class="input-grid">
-                <label>Online hours <input data-field="online_hours" type="number" min="0" step="0.1" /></label>
-                <label>Active hours <input data-field="active_hours" type="number" min="0" step="0.1" /></label>
-                <label>Miles <input data-field="miles" type="number" min="0" step="1" /></label>
-                <label>Trips <input data-field="trips" type="number" min="0" step="1" /></label>
-              </div>
+              <div id="workload-daily-grid" class="daily-grid"></div>
               <label class="notes-label">Notes <textarea data-field="notes" rows="4"></textarea></label>
             </section>
           </section>
