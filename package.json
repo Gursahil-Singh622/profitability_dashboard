@@ -1,0 +1,8 @@
+{
+  "devDependencies": {
+    "@playwright/test": "^1.59.1"
+  },
+  "scripts": {
+    "test:e2e": "playwright test tests/login.spec.js --browser=chromium"
+  }
+}
