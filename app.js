@@ -24,6 +24,10 @@ const numberFields = ["online_hours", "active_hours", "miles", "trips"];
 const allFields = [...moneyFields, ...numberFields, "notes"];
 const fixedFields = ["fixed_insurance", "fixed_phone", "fixed_vehicle_payment", "fixed_other"];
 const variableFields = ["fuel", "maintenance", "tolls_parking", "car_wash", "food", "variable_other"];
+const demoCredentials = {
+  email: "demo@example.com",
+  password: "DemoPass123!"
+};
 
 let currentUser = null;
 let currentEntryId = null;
@@ -202,6 +206,17 @@ function seedDemoEntries() {
   ]);
 }
 
+function enterDemoMode() {
+  seedDemoEntries();
+  isDemoMode = true;
+  enterDashboard({
+    user: {
+      id: "demo-user",
+      email: demoCredentials.email
+    }
+  });
+}
+
 async function loadWeek() {
   if (!currentUser || !$("#week-start").value) return;
 
@@ -322,6 +337,12 @@ async function handleAuth(event) {
 
   const email = $("#auth-email").value.trim();
   const password = $("#auth-password").value;
+
+  if (authMode === "signin" && email.toLowerCase() === demoCredentials.email && password === demoCredentials.password) {
+    enterDemoMode();
+    return;
+  }
+
   const action =
     authMode === "signup"
       ? supabase.auth.signUp({ email, password })
@@ -354,14 +375,9 @@ function bindEvents() {
   $("#week-start").addEventListener("change", loadWeek);
   $("#save-button").addEventListener("click", saveWeek);
   $("#demo-login-button").addEventListener("click", () => {
-    seedDemoEntries();
-    isDemoMode = true;
-    enterDashboard({
-      user: {
-        id: "demo-user",
-        email: "demo@example.com"
-      }
-    });
+    $("#auth-email").value = demoCredentials.email;
+    $("#auth-password").value = demoCredentials.password;
+    enterDemoMode();
   });
   $("#sign-out-button").addEventListener("click", () => {
     if (isDemoMode) {
