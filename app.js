@@ -28,6 +28,7 @@ const variableFields = ["fuel", "maintenance", "tolls_parking", "car_wash", "foo
 let currentUser = null;
 let currentEntryId = null;
 let authMode = "signin";
+let isDemoMode = false;
 
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => [...document.querySelectorAll(selector)];
@@ -158,8 +159,58 @@ function fillForm(entry) {
   renderMetrics();
 }
 
+function demoEntries() {
+  try {
+    return JSON.parse(localStorage.getItem("driver-ledger-demo-weeks") || "[]");
+  } catch {
+    return [];
+  }
+}
+
+function saveDemoEntries(entries) {
+  localStorage.setItem("driver-ledger-demo-weeks", JSON.stringify(entries));
+}
+
+function seedDemoEntries() {
+  if (demoEntries().length) return;
+
+  const weekStart = startOfWeek();
+  saveDemoEntries([
+    {
+      id: crypto.randomUUID(),
+      user_id: "demo-user",
+      week_start: weekStart,
+      gross_earnings: 1180,
+      tips: 146,
+      app_bonus: 75,
+      fixed_insurance: 54,
+      fixed_phone: 22,
+      fixed_vehicle_payment: 115,
+      fixed_other: 15,
+      fuel: 188,
+      maintenance: 46,
+      tolls_parking: 28,
+      car_wash: 14,
+      food: 32,
+      variable_other: 0,
+      online_hours: 38.5,
+      active_hours: 29.2,
+      miles: 742,
+      trips: 91,
+      notes: "Demo week for testing the dashboard."
+    }
+  ]);
+}
+
 async function loadWeek() {
   if (!currentUser || !$("#week-start").value) return;
+
+  if (isDemoMode) {
+    const data = demoEntries().find((entry) => entry.week_start === $("#week-start").value);
+    if (data) fillForm(data);
+    else clearForm();
+    return;
+  }
 
   const { data, error } = await supabase
     .from("driver_weekly_finances")
@@ -177,6 +228,11 @@ async function loadWeek() {
 }
 
 async function loadRecentWeeks() {
+  if (isDemoMode) {
+    renderWeekList(demoEntries().sort((a, b) => b.week_start.localeCompare(a.week_start)).slice(0, 8));
+    return;
+  }
+
   const { data, error } = await supabase
     .from("driver_weekly_finances")
     .select("*")
@@ -188,13 +244,17 @@ async function loadRecentWeeks() {
     return;
   }
 
-  $("#week-count").textContent = `${data.length} saved`;
-  if (!data.length) {
+  renderWeekList(data);
+}
+
+function renderWeekList(entries) {
+  $("#week-count").textContent = `${entries.length} saved`;
+  if (!entries.length) {
     $("#week-list").innerHTML = `<p class="empty-state">No saved weeks yet.</p>`;
     return;
   }
 
-  $("#week-list").innerHTML = data
+  $("#week-list").innerHTML = entries
     .map((entry) => {
       const gross = entry.gross_earnings + entry.tips + entry.app_bonus;
       const fixed = fixedFields.reduce((total, field) => total + Number(entry[field] || 0), 0);
@@ -219,6 +279,23 @@ async function loadRecentWeeks() {
 async function saveWeek() {
   $("#save-message").textContent = "";
   const payload = entryFromForm();
+
+  if (isDemoMode) {
+    const entries = demoEntries();
+    const nextEntry = {
+      ...payload,
+      id: currentEntryId || crypto.randomUUID()
+    };
+    const nextEntries = currentEntryId
+      ? entries.map((entry) => (entry.id === currentEntryId ? nextEntry : entry))
+      : [nextEntry, ...entries];
+    saveDemoEntries(nextEntries);
+    currentEntryId = nextEntry.id;
+    $("#save-message").textContent = "Saved to this browser.";
+    await loadRecentWeeks();
+    return;
+  }
+
   const query = currentEntryId
     ? supabase.from("driver_weekly_finances").update(payload).eq("id", currentEntryId).select().single()
     : supabase.from("driver_weekly_finances").insert(payload).select().single();
@@ -237,6 +314,11 @@ async function saveWeek() {
 async function handleAuth(event) {
   event.preventDefault();
   $("#auth-message").textContent = "";
+
+  if (isDemoMode) {
+    isDemoMode = false;
+    currentUser = null;
+  }
 
   const email = $("#auth-email").value.trim();
   const password = $("#auth-password").value;
@@ -271,7 +353,25 @@ function bindEvents() {
 
   $("#week-start").addEventListener("change", loadWeek);
   $("#save-button").addEventListener("click", saveWeek);
-  $("#sign-out-button").addEventListener("click", () => supabase.auth.signOut());
+  $("#demo-login-button").addEventListener("click", () => {
+    seedDemoEntries();
+    isDemoMode = true;
+    enterDashboard({
+      user: {
+        id: "demo-user",
+        email: "demo@example.com"
+      }
+    });
+  });
+  $("#sign-out-button").addEventListener("click", () => {
+    if (isDemoMode) {
+      isDemoMode = false;
+      currentUser = null;
+      showView("auth");
+      return;
+    }
+    supabase.auth.signOut();
+  });
   $("#finance-form").addEventListener("input", renderMetrics);
   $("#week-list").addEventListener("click", async (event) => {
     const row = event.target.closest("[data-week]");
@@ -283,7 +383,7 @@ function bindEvents() {
 
 async function enterDashboard(session) {
   currentUser = session.user;
-  $("#user-email").textContent = currentUser.email;
+  $("#user-email").textContent = isDemoMode ? `${currentUser.email} · demo` : currentUser.email;
   $("#week-start").value = startOfWeek();
   showView("dashboard");
   await loadWeek();

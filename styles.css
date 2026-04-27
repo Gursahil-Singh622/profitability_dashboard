@@ -169,6 +169,7 @@ textarea:focus {
 }
 
 .primary-button,
+.secondary-button,
 .ghost-button {
   min-height: 42px;
   border-radius: 7px;
@@ -183,6 +184,17 @@ textarea:focus {
 
 .primary-button:hover {
   background: #096d5a;
+}
+
+.secondary-button {
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+}
+
+.secondary-button:hover {
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
 .ghost-button {
@@ -510,7 +522,8 @@ code {
 
   .control-strip,
   .control-strip label,
-  .primary-button {
+  .primary-button,
+  .secondary-button {
     width: 100%;
   }
 
