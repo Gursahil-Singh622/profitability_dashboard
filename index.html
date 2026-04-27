@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Driver Ledger</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section id="auth-view" class="auth-view" hidden>
+        <div class="auth-panel">
+          <div>
+            <p class="eyebrow">Private finance tracker</p>
+            <h1>Driver Ledger</h1>
+            <p class="lede">
+              A weekly dashboard for Uber drivers to track earnings, fixed costs,
+              variable costs, hours, miles, and take-home performance.
+            </p>
+          </div>
+
+          <form id="auth-form" class="auth-form">
+            <div class="auth-tabs" role="tablist" aria-label="Authentication mode">
+              <button type="button" class="tab-button active" data-auth-mode="signin">Sign in</button>
+              <button type="button" class="tab-button" data-auth-mode="signup">Create account</button>
+            </div>
+            <label>
+              Email
+              <input id="auth-email" type="email" autocomplete="email" required />
+            </label>
+            <label>
+              Password
+              <input id="auth-password" type="password" autocomplete="current-password" required minlength="8" />
+            </label>
+            <button class="primary-button" type="submit" id="auth-submit">Sign in</button>
+            <p id="auth-message" class="form-message" role="status"></p>
+          </form>
+        </div>
+      </section>
+
+      <section id="setup-view" class="setup-view" hidden>
+        <div class="setup-panel">
+          <p class="eyebrow">Connection required</p>
+          <h1>Connect Supabase</h1>
+          <p class="lede">
+            Add your free Supabase project URL and anon key in
+            <code>config.js</code>, then deploy this folder to Netlify or Vercel.
+          </p>
+          <pre><code>window.DRIVER_LEDGER_CONFIG = {
+  supabaseUrl: "https://your-project.supabase.co",
+  supabaseAnonKey: "your-public-anon-key"
+};</code></pre>
+        </div>
+      </section>
+
+      <section id="dashboard-view" class="dashboard-view" hidden>
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">Weekly business dashboard</p>
+            <h1>Driver Ledger</h1>
+          </div>
+          <div class="topbar-actions">
+            <span id="user-email" class="user-email"></span>
+            <button id="sign-out-button" class="ghost-button" type="button" title="Sign out" aria-label="Sign out">
+              <span aria-hidden="true">⇥</span>
+            </button>
+          </div>
+        </header>
+
+        <section class="control-strip">
+          <label>
+            Week starting
+            <input id="week-start" type="date" />
+          </label>
+          <button id="save-button" class="primary-button" type="button">Save week</button>
+          <p id="save-message" class="form-message" role="status"></p>
+        </section>
+
+        <section class="metric-grid" aria-label="Weekly summary">
+          <article class="metric-card">
+            <span>Net profit</span>
+            <strong id="metric-profit">$0</strong>
+            <small id="metric-margin">0% margin</small>
+          </article>
+          <article class="metric-card">
+            <span>Gross earnings</span>
+            <strong id="metric-gross">$0</strong>
+            <small id="metric-revenue-breakdown">$0 base + tips/bonus</small>
+          </article>
+          <article class="metric-card">
+            <span>Total costs</span>
+            <strong id="metric-costs">$0</strong>
+            <small id="metric-cost-breakdown">$0 fixed + $0 variable</small>
+          </article>
+          <article class="metric-card">
+            <span>Net hourly</span>
+            <strong id="metric-hourly">$0/hr</strong>
+            <small id="metric-active-hourly">$0/hr active</small>
+          </article>
+          <article class="metric-card">
+            <span>Per mile</span>
+            <strong id="metric-mile">$0/mi</strong>
+            <small id="metric-trips">0 trips</small>
+          </article>
+        </section>
+
+        <section class="dashboard-grid">
+          <form id="finance-form" class="finance-form">
+            <section class="form-section">
+              <div>
+                <h2>Revenue</h2>
+                <p>Income from Uber and riders.</p>
+              </div>
+              <div class="input-grid">
+                <label>Uber payouts <input data-money data-field="gross_earnings" type="number" min="0" step="0.01" /></label>
+                <label>Tips <input data-money data-field="tips" type="number" min="0" step="0.01" /></label>
+                <label>Promos / bonuses <input data-money data-field="app_bonus" type="number" min="0" step="0.01" /></label>
+              </div>
+            </section>
+
+            <section class="form-section">
+              <div>
+                <h2>Fixed Costs</h2>
+                <p>Recurring costs allocated to this week.</p>
+              </div>
+              <div class="input-grid">
+                <label>Insurance <input data-money data-field="fixed_insurance" type="number" min="0" step="0.01" /></label>
+                <label>Phone plan <input data-money data-field="fixed_phone" type="number" min="0" step="0.01" /></label>
+                <label>Vehicle payment <input data-money data-field="fixed_vehicle_payment" type="number" min="0" step="0.01" /></label>
+                <label>Other fixed <input data-money data-field="fixed_other" type="number" min="0" step="0.01" /></label>
+              </div>
+            </section>
+
+            <section class="form-section">
+              <div>
+                <h2>Variable Costs</h2>
+                <p>Costs that move with driving volume.</p>
+              </div>
+              <div class="input-grid">
+                <label>Fuel / charging <input data-money data-field="fuel" type="number" min="0" step="0.01" /></label>
+                <label>Maintenance <input data-money data-field="maintenance" type="number" min="0" step="0.01" /></label>
+                <label>Tolls / parking <input data-money data-field="tolls_parking" type="number" min="0" step="0.01" /></label>
+                <label>Car wash <input data-money data-field="car_wash" type="number" min="0" step="0.01" /></label>
+                <label>Meals / supplies <input data-money data-field="food" type="number" min="0" step="0.01" /></label>
+                <label>Other variable <input data-money data-field="variable_other" type="number" min="0" step="0.01" /></label>
+              </div>
+            </section>
+
+            <section class="form-section">
+              <div>
+                <h2>Workload</h2>
+                <p>Time, trips, and distance driven.</p>
+              </div>
+              <div class="input-grid">
+                <label>Online hours <input data-field="online_hours" type="number" min="0" step="0.1" /></label>
+                <label>Active hours <input data-field="active_hours" type="number" min="0" step="0.1" /></label>
+                <label>Miles <input data-field="miles" type="number" min="0" step="1" /></label>
+                <label>Trips <input data-field="trips" type="number" min="0" step="1" /></label>
+              </div>
+              <label class="notes-label">Notes <textarea data-field="notes" rows="4"></textarea></label>
+            </section>
+          </form>
+
+          <aside class="side-panel">
+            <section class="trend-panel">
+              <div class="panel-heading">
+                <h2>Recent Weeks</h2>
+                <span id="week-count">0 saved</span>
+              </div>
+              <div id="week-list" class="week-list"></div>
+            </section>
+
+            <section class="trend-panel">
+              <div class="panel-heading">
+                <h2>Cost Mix</h2>
+                <span id="cost-mix-label">$0 total</span>
+              </div>
+              <div class="bar-stack" aria-hidden="true">
+                <span id="fixed-bar"></span>
+                <span id="variable-bar"></span>
+              </div>
+              <div class="legend">
+                <span><i class="fixed-dot"></i> Fixed</span>
+                <span><i class="variable-dot"></i> Variable</span>
+              </div>
+            </section>
+          </aside>
+        </section>
+      </section>
+    </main>
+
+    <script src="config.js"></script>
+    <script type="module" src="app.js"></script>
+  </body>
+</html>
