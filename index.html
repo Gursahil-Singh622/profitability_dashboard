@@ -84,40 +84,82 @@
           <p id="save-message" class="form-message" role="status"></p>
         </section>
 
-        <section class="metric-grid" aria-label="Weekly summary">
-          <article class="metric-card">
-            <span>Net profit</span>
-            <strong id="metric-profit">$0</strong>
-            <small id="metric-margin">0% margin</small>
-          </article>
-          <article class="metric-card">
-            <span>Gross earnings</span>
-            <strong id="metric-gross">$0</strong>
-            <small id="metric-revenue-breakdown">$0 base + tips/bonus</small>
-          </article>
-          <article class="metric-card">
-            <span>Total costs</span>
-            <strong id="metric-costs">$0</strong>
-            <small id="metric-cost-breakdown">$0 fixed + $0 variable</small>
-          </article>
-          <article class="metric-card">
-            <span>Net hourly</span>
-            <strong id="metric-hourly">$0/hr</strong>
-            <small id="metric-active-hourly">$0/hr active</small>
-          </article>
-          <article class="metric-card">
-            <span>Per mile</span>
-            <strong id="metric-mile">$0/mi</strong>
-            <small id="metric-trips">0 trips</small>
-          </article>
-        </section>
+        <nav class="dashboard-tabs" aria-label="Dashboard sections">
+          <button class="dashboard-tab active" type="button" data-tab="overview">Overview</button>
+          <button class="dashboard-tab" type="button" data-tab="revenue">Revenue</button>
+          <button class="dashboard-tab" type="button" data-tab="expenses">Expenses</button>
+          <button class="dashboard-tab" type="button" data-tab="workload">Workload</button>
+        </nav>
 
-        <section class="dashboard-grid">
-          <form id="finance-form" class="finance-form">
+        <form id="finance-form">
+          <section class="tab-panel active" data-panel="overview">
+            <div class="panel-heading overview-heading">
+              <div>
+                <h2 id="overview-month-label">Month Overview</h2>
+                <p>Calendar-month totals from saved weeks.</p>
+              </div>
+              <span id="overview-week-count">0 weeks</span>
+            </div>
+
+            <section class="metric-grid" aria-label="Monthly summary">
+              <article class="metric-card">
+                <span>Monthly net profit</span>
+                <strong id="metric-profit">$0</strong>
+                <small id="metric-margin">0% margin</small>
+              </article>
+              <article class="metric-card">
+                <span>Monthly revenue</span>
+                <strong id="metric-gross">$0</strong>
+                <small id="metric-revenue-breakdown">$0 payouts + tips/bonus</small>
+              </article>
+              <article class="metric-card">
+                <span>Monthly costs</span>
+                <strong id="metric-costs">$0</strong>
+                <small id="metric-cost-breakdown">$0 fixed + $0 variable</small>
+              </article>
+              <article class="metric-card">
+                <span>Net hourly</span>
+                <strong id="metric-hourly">$0/hr</strong>
+                <small id="metric-active-hourly">$0/hr active</small>
+              </article>
+              <article class="metric-card">
+                <span>Per mile</span>
+                <strong id="metric-mile">$0/mi</strong>
+                <small id="metric-trips">0 trips</small>
+              </article>
+            </section>
+
+            <section class="overview-grid">
+              <section class="trend-panel">
+                <div class="panel-heading">
+                  <h2>Recent Weeks</h2>
+                  <span id="week-count">0 saved</span>
+                </div>
+                <div id="week-list" class="week-list"></div>
+              </section>
+
+              <section class="trend-panel">
+                <div class="panel-heading">
+                  <h2>Monthly Cost Mix</h2>
+                  <span id="cost-mix-label">$0 total</span>
+                </div>
+                <div class="bar-stack" aria-hidden="true">
+                  <span id="fixed-bar"></span>
+                  <span id="variable-bar"></span>
+                </div>
+                <div class="legend">
+                  <span><i class="fixed-dot"></i> Fixed</span>
+                  <span><i class="variable-dot"></i> Variable</span>
+                </div>
+              </section>
+            </section>
+          </section>
+
+          <section class="tab-panel finance-form" data-panel="revenue">
             <section class="form-section">
               <div>
                 <h2>Revenue</h2>
-                <p>Income from Uber and riders.</p>
+                <p>Income from Uber and riders for the selected week.</p>
               </div>
               <div class="input-grid">
                 <label>Uber payouts <input data-money data-field="gross_earnings" type="number" min="0" step="0.01" /></label>
@@ -125,7 +167,9 @@
                 <label>Promos / bonuses <input data-money data-field="app_bonus" type="number" min="0" step="0.01" /></label>
               </div>
             </section>
+          </section>
 
+          <section class="tab-panel finance-form" data-panel="expenses">
             <section class="form-section">
               <div>
                 <h2>Fixed Costs</h2>
@@ -153,11 +197,13 @@
                 <label>Other variable <input data-money data-field="variable_other" type="number" min="0" step="0.01" /></label>
               </div>
             </section>
+          </section>
 
+          <section class="tab-panel finance-form" data-panel="workload">
             <section class="form-section">
               <div>
                 <h2>Workload</h2>
-                <p>Time, trips, and distance driven.</p>
+                <p>Time, trips, distance, and notes for the selected week.</p>
               </div>
               <div class="input-grid">
                 <label>Online hours <input data-field="online_hours" type="number" min="0" step="0.1" /></label>
@@ -167,33 +213,8 @@
               </div>
               <label class="notes-label">Notes <textarea data-field="notes" rows="4"></textarea></label>
             </section>
-          </form>
-
-          <aside class="side-panel">
-            <section class="trend-panel">
-              <div class="panel-heading">
-                <h2>Recent Weeks</h2>
-                <span id="week-count">0 saved</span>
-              </div>
-              <div id="week-list" class="week-list"></div>
-            </section>
-
-            <section class="trend-panel">
-              <div class="panel-heading">
-                <h2>Cost Mix</h2>
-                <span id="cost-mix-label">$0 total</span>
-              </div>
-              <div class="bar-stack" aria-hidden="true">
-                <span id="fixed-bar"></span>
-                <span id="variable-bar"></span>
-              </div>
-              <div class="legend">
-                <span><i class="fixed-dot"></i> Fixed</span>
-                <span><i class="variable-dot"></i> Variable</span>
-              </div>
-            </section>
-          </aside>
-        </section>
+          </section>
+        </form>
       </section>
     </main>
 

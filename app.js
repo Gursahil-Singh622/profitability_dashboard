@@ -34,6 +34,7 @@ let currentUser = null;
 let currentEntryId = null;
 let authMode = "signin";
 let isDemoMode = false;
+let savedEntries = [];
 
 const $ = (selector) => document.querySelector(selector);
 const $$ = (selector) => [...document.querySelectorAll(selector)];
@@ -86,17 +87,16 @@ function sum(fields) {
   return fields.reduce((total, field) => total + valueOf(field), 0);
 }
 
-function calculate() {
-  const gross = valueOf("gross_earnings") + valueOf("tips") + valueOf("app_bonus");
-  const fixed = sum(fixedFields);
-  const variable = sum(variableFields);
+function metricsFromValues(values) {
+  const gross = Number(values.gross_earnings || 0) + Number(values.tips || 0) + Number(values.app_bonus || 0);
+  const fixed = fixedFields.reduce((total, field) => total + Number(values[field] || 0), 0);
+  const variable = variableFields.reduce((total, field) => total + Number(values[field] || 0), 0);
   const costs = fixed + variable;
   const profit = gross - costs;
-  const onlineHours = valueOf("online_hours");
-  const activeHours = valueOf("active_hours");
-  const miles = valueOf("miles");
-  const trips = valueOf("trips");
-
+  const onlineHours = Number(values.online_hours || 0);
+  const activeHours = Number(values.active_hours || 0);
+  const miles = Number(values.miles || 0);
+  const trips = Number(values.trips || 0);
   return {
     gross,
     fixed,
@@ -111,12 +111,79 @@ function calculate() {
   };
 }
 
+function calculate() {
+  const values = {};
+  [...moneyFields, ...numberFields].forEach((field) => {
+    values[field] = valueOf(field);
+  });
+  return metricsFromValues(values);
+}
+
+function selectedMonthEntries() {
+  const selected = new Date(`${$("#week-start").value || startOfWeek()}T00:00:00`);
+  const month = selected.getMonth();
+  const year = selected.getFullYear();
+  const formEntry = entryFromForm();
+  const merged = savedEntries
+    .filter((entry) => entry.id !== currentEntryId && entry.week_start !== formEntry.week_start)
+    .concat(formEntry);
+
+  return merged.filter((entry) => {
+    const date = new Date(`${entry.week_start}T00:00:00`);
+    return date.getMonth() === month && date.getFullYear() === year;
+  });
+}
+
+function monthLabel() {
+  const selected = new Date(`${$("#week-start").value || startOfWeek()}T00:00:00`);
+  return selected.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+}
+
+function combineMetrics(entries) {
+  return entries.reduce(
+    (totals, entry) => {
+      const metrics = metricsFromValues(entry);
+      totals.gross += metrics.gross;
+      totals.fixed += metrics.fixed;
+      totals.variable += metrics.variable;
+      totals.costs += metrics.costs;
+      totals.profit += metrics.profit;
+      totals.onlineHours += Number(entry.online_hours || 0);
+      totals.activeHours += Number(entry.active_hours || 0);
+      totals.miles += Number(entry.miles || 0);
+      totals.trips += Number(entry.trips || 0);
+      totals.basePayouts += Number(entry.gross_earnings || 0);
+      return totals;
+    },
+    {
+      gross: 0,
+      fixed: 0,
+      variable: 0,
+      costs: 0,
+      profit: 0,
+      onlineHours: 0,
+      activeHours: 0,
+      miles: 0,
+      trips: 0,
+      basePayouts: 0
+    }
+  );
+}
+
 function renderMetrics() {
-  const metrics = calculate();
+  const entries = selectedMonthEntries();
+  const metrics = combineMetrics(entries);
+  metrics.margin = metrics.gross > 0 ? (metrics.profit / metrics.gross) * 100 : 0;
+  metrics.hourly = metrics.onlineHours > 0 ? metrics.profit / metrics.onlineHours : 0;
+  metrics.activeHourly = metrics.activeHours > 0 ? metrics.profit / metrics.activeHours : 0;
+  metrics.perMile = metrics.miles > 0 ? metrics.profit / metrics.miles : 0;
+
+  $("#overview-month-label").textContent = `${monthLabel()} Overview`;
+  $("#overview-week-count").textContent = `${entries.length} week${entries.length === 1 ? "" : "s"}`;
   $("#metric-profit").textContent = currency(metrics.profit);
   $("#metric-margin").textContent = `${metrics.margin.toFixed(1)}% margin`;
   $("#metric-gross").textContent = currency(metrics.gross);
-  $("#metric-revenue-breakdown").textContent = `${currency(valueOf("gross_earnings"))} payouts + tips/bonus`;
+  $("#metric-revenue-breakdown").textContent = `${currency(metrics.basePayouts)} payouts + tips/bonus`;
   $("#metric-costs").textContent = currency(metrics.costs);
   $("#metric-cost-breakdown").textContent = `${currency(metrics.fixed)} fixed + ${currency(metrics.variable)} variable`;
   $("#metric-hourly").textContent = `${preciseCurrency(metrics.hourly)}/hr`;
@@ -132,7 +199,7 @@ function renderMetrics() {
 
 function entryFromForm() {
   const entry = {
-    user_id: currentUser.id,
+    user_id: currentUser?.id || "demo-user",
     week_start: $("#week-start").value
   };
 
@@ -250,7 +317,9 @@ async function loadWeek() {
 
 async function loadRecentWeeks() {
   if (isDemoMode) {
-    renderWeekList(demoEntries().sort((a, b) => b.week_start.localeCompare(a.week_start)).slice(0, 8));
+    savedEntries = demoEntries().sort((a, b) => b.week_start.localeCompare(a.week_start));
+    renderMetrics();
+    renderWeekList(savedEntries.slice(0, 8));
     return;
   }
 
@@ -258,14 +327,16 @@ async function loadRecentWeeks() {
     .from("driver_weekly_finances")
     .select("*")
     .order("week_start", { ascending: false })
-    .limit(8);
+    .limit(32);
 
   if (error) {
     $("#week-list").innerHTML = `<p class="empty-state">${error.message}</p>`;
     return;
   }
 
-  renderWeekList(data);
+  savedEntries = data || [];
+  renderMetrics();
+  renderWeekList(savedEntries.slice(0, 8));
 }
 
 function renderWeekList(entries) {
@@ -368,6 +439,13 @@ async function handleAuth(event) {
 
 function bindEvents() {
   $("#auth-form").addEventListener("submit", handleAuth);
+  $$(".dashboard-tab").forEach((button) => {
+    button.addEventListener("click", () => {
+      const tab = button.dataset.tab;
+      $$(".dashboard-tab").forEach((item) => item.classList.toggle("active", item === button));
+      $$("[data-panel]").forEach((panel) => panel.classList.toggle("active", panel.dataset.panel === tab));
+    });
+  });
   $$(".tab-button").forEach((button) => {
     button.addEventListener("click", () => {
       authMode = button.dataset.authMode;
